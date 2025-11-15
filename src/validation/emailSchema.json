@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ieee-portal.local/email.schema.json",
+  "title": "EmailMessage",
+  "type": "object",
+  "required": ["to", "subject"],
+  "properties": {
+    "id": {"type": "string"},
+    "correlationId": {"type": "string"},
+    "idempotencyKey": {"type": "string"},
+    "eventType": {"type": "string"},
+    "to": {
+      "type": "array",
+      "items": {"type": "string", "format": "email"},
+      "minItems": 1
+    },
+    "cc": {
+      "type": "array",
+      "items": {"type": "string", "format": "email"},
+      "default": []
+    },
+    "bcc": {
+      "type": "array",
+      "items": {"type": "string", "format": "email"},
+      "default": []
+    },
+    "subject": {"type": "string", "minLength": 3},
+    "text": {"type": "string"},
+    "html": {"type": "string"},
+    "templateId": {"type": "string"},
+    "templateVersion": {"type": "string"},
+    "templateVars": {"type": "object"},
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["filename", "content", "mimeType"],
+        "properties": {
+          "filename": {"type": "string"},
+          "content": {"type": "string"},
+          "mimeType": {"type": "string"}
+        }
+      },
+      "default": []
+    },
+    "priority": {"type": "string", "enum": ["low", "normal", "high"], "default": "normal"},
+    "scheduledFor": {"type": "string", "format": "date-time"},
+    "retries": {"type": "integer", "minimum": 0, "default": 0},
+    "createdAt": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}
