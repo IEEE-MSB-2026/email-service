@@ -4,6 +4,7 @@ Dedicated microservice for sending transactional emails.
 
 ## Features
 - REST endpoint for immediate send (`POST /email/send`)
+- Bulk row templating endpoint (`POST /email/bulk-template`) with dry-run
 - Redis Stream consumer (`internal`) for async event-driven emails
 - JSON Schema validation (AJV)
 - Simple template rendering (in-memory; replace with DB later)
@@ -31,6 +32,60 @@ curl -X POST http://localhost:5060/email/send \
   }'
 ```
 
+## Bulk Row Templated Send
+Facilitates coordinators sending many personalized emails using a simple row-based template.
+
+Endpoint: `POST /email/bulk-template`
+
+Request body:
+```json
+{
+  "headers": ["email", "name", "age", "title"],
+  "rows": [
+    ["alice@example.com", "Alice", 23, "Coordinator"],
+    ["bob@example.com", "Bob", 30, "Mentor"]
+  ],
+  "template": "Hello {{name}} (age {{3}}), your title is {{title}}. Your email {{1}}.",
+  "subjectTemplate": "Welcome {{name}}",
+  "dryRun": true
+}
+```
+
+Rules:
+- Headers MUST include `email` (any position); that column determines the recipient address.
+- Placeholders: `{{1}}` numeric (1-based index into row), `{{headerName}}` by header (case-insensitive).
+- Unknown placeholders become empty string.
+- `subjectTemplate` optional; defaults to `Notification`.
+- `dryRun: true` returns preview without sending.
+
+Dry-run response example:
+```json
+{
+  "status": "ok",
+  "dryRun": true,
+  "total": 2,
+  "successCount": 2,
+  "failureCount": 0,
+  "rendered": [
+    {"email": "alice@example.com", "subject": "Welcome Alice", "body": "Hello Alice (age 23), your title is Coordinator. Your email alice@example.com."},
+    {"email": "bob@example.com", "subject": "Welcome Bob", "body": "Hello Bob (age 30), your title is Mentor. Your email bob@example.com."}
+  ],
+  "failures": []
+}
+```
+
+Sending (omit `dryRun` or set `false`) returns summary:
+```json
+{
+  "status": "sent",
+  "dryRun": false,
+  "total": 2,
+  "successCount": 2,
+  "failureCount": 0,
+  "failures": []
+}
+```
+
 ## Stream Event Format
 Producer should XADD:
 - key: `payload`
@@ -53,6 +108,7 @@ Example payload:
 - Add metrics endpoint (Prometheus)
 - Multi-provider failover (SES/SendGrid)
 - Scheduled sends + localization
+- Streaming ingestion for bulk templates (avoid large payload bodies)
 
 ## Integration Path
 1. Deploy email-service separately (container / VM).
