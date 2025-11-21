@@ -2,6 +2,7 @@ const express = require('express');
 const emailRoutes = require('./routes/emailRoutes');
 const logger = require('./utils/logger');
 const fs = require('fs');
+const path = require("path");
 const config = require('./config');
 
 const app = express();

@@ -5,6 +5,7 @@ Dedicated microservice for sending transactional emails.
 ## Features
 - REST endpoint for immediate send (`POST /email/send`)
 - Bulk row templating endpoint (`POST /email/bulk-template`) with dry-run
+- Bulk sheet-based templated endpoint (`POST /email/bulk-template-sheet`) via file upload or URL
 - Redis Stream consumer (`internal`) for async event-driven emails
 - JSON Schema validation (AJV)
 - Simple template rendering (in-memory; replace with DB later)
@@ -84,6 +85,44 @@ Sending (omit `dryRun` or set `false`) returns summary:
   "failureCount": 0,
   "failures": []
 }
+```
+
+## Bulk Sheet Templated Send
+Allows uploading a spreadsheet (CSV, TSV, XLSX) or referencing a remote sheet URL instead of passing raw rows.
+
+Endpoint (multipart upload): `POST /email/bulk-template-sheet`
+
+Multipart form fields:
+- `sheet`: file (required if no `sheetUrl` provided)
+- `template`: string (required)
+- `subjectTemplate`: optional string
+- `dryRun`: `true|false`
+
+Endpoint (JSON body with URL): `POST /email/bulk-template-sheet`
+```json
+{
+  "sheetUrl": "https://example.com/data.csv",
+  "template": "Hello {{name}}",
+  "subjectTemplate": "Greetings {{name}}",
+  "dryRun": true
+}
+```
+
+Parsing rules:
+- First non-empty row is treated as headers; must include `email` column.
+- Subsequent rows become data; shorter rows are padded with empty strings.
+- Same placeholder rules as raw bulk endpoint.
+
+Dry-run response includes parsed `headers` and `rendered` previews.
+
+Example curl (file upload):
+```bash
+curl -X POST http://localhost:5060/email/bulk-template-sheet \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'sheet=@participants.xlsx' \
+  -F 'template=Hello {{name}} your role {{role}}' \
+  -F 'subjectTemplate=Welcome {{name}}' \
+  -F 'dryRun=true'
 ```
 
 ## Stream Event Format
