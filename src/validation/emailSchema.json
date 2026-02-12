@@ -6,6 +6,7 @@
   "required": ["to", "subject"],
   "properties": {
     "id": {"type": "string"},
+    "schemaVersion": {"type": "string"},
     "correlationId": {"type": "string"},
     "idempotencyKey": {"type": "string"},
     "eventType": {"type": "string"},

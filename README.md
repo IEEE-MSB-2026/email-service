@@ -138,6 +138,7 @@ Producer should XADD:
 Example payload:
 ```json
 {
+  "schemaVersion": "1.0",
   "to": ["user@example.com"],
   "subject": "Registration Confirmed",
   "templateId": "registration_confirmation",
