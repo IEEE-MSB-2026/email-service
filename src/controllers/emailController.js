@@ -3,6 +3,7 @@ const { renderTemplate, renderRowTemplate } = require('../services/templateServi
 const { sendViaMailjet, buildMessage } = require('../services/sendProvider');
 const { checkAndSet } = require('../utils/idempotencyStore');
 const { parseSheetFromFile, parseSheetFromUrl } = require('../utils/sheetParser');
+const config = require('../config');
 
 async function sendEmailDirect(req, res, next) {
   try {
@@ -123,7 +124,17 @@ async function bulkTemplatedSendSheet(req, res, next) {
     if (req.file) {
       ({ headers, rows } = await parseSheetFromFile(req.file));
     } else if (sheetUrl) {
-      ({ headers, rows } = await parseSheetFromUrl(sheetUrl));
+      if (!config.allowRemoteSheetUrl) {
+        const err = new Error('sheetUrl is disabled by configuration');
+        err.status = 403;
+        throw err;
+      }
+      if (!Array.isArray(config.sheetUrlAllowlist) || config.sheetUrlAllowlist.length === 0) {
+        const err = new Error('sheetUrl allowlist is required when remote URL mode is enabled');
+        err.status = 503;
+        throw err;
+      }
+      ({ headers, rows } = await parseSheetFromUrl(sheetUrl, { allowlist: config.sheetUrlAllowlist }));
     } else {
       const err = new Error('sheet file (field name sheet) or sheetUrl required'); err.status = 400; throw err;
     }

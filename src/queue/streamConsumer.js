@@ -18,7 +18,9 @@ function parseEntry(entry) {
 }
 
 async function startConsumer() {
-  const client = new Redis({ host: redis.host, port: redis.port, password: redis.password });
+  const client = redis.url
+    ? new Redis(redis.url)
+    : new Redis({ host: redis.host, port: redis.port, password: redis.password });
   await client.ping();
   try {
     await client.xgroup('CREATE', streamName, GROUP, '$', 'MKSTREAM');

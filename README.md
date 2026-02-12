@@ -3,9 +3,11 @@
 Dedicated microservice for sending transactional emails.
 
 ## Features
+- Service-token protected ingress for all `/email/*` routes
 - REST endpoint for immediate send (`POST /email/send`)
 - Bulk row templating endpoint (`POST /email/bulk-template`) with dry-run
-- Bulk sheet-based templated endpoint (`POST /email/bulk-template-sheet`) via file upload or URL
+- Bulk sheet-based templated endpoint (`POST /email/bulk-template-sheet`) via file upload
+- Optional remote sheet URL mode behind allowlist flag (`ENABLE_REMOTE_SHEET_URL=true`)
 - Redis Stream consumer (`internal`) for async event-driven emails
 - JSON Schema validation (AJV)
 - Simple template rendering (in-memory; replace with DB later)
@@ -16,7 +18,7 @@ Dedicated microservice for sending transactional emails.
 ## Quick Start
 ```bash
 cp .env.example .env
-# edit MAILJET_API_KEY and MAILJET_API_SECRET
+# edit MAILJET_API_KEY, MAILJET_API_SECRET, EMAIL_SERVICE_AUTH_TOKEN
 npm install
 npm run dev
 ```
@@ -26,6 +28,7 @@ Service runs on `PORT` (default 5060).
 ```bash
 curl -X POST http://localhost:5060/email/send \
   -H 'Content-Type: application/json' \
+  -H 'x-service-token: change-me-email-service-token' \
   -d '{
     "to": ["user@example.com"],
     "subject": "Welcome",
@@ -89,6 +92,7 @@ Sending (omit `dryRun` or set `false`) returns summary:
 
 ## Bulk Sheet Templated Send
 Allows uploading a spreadsheet (CSV, TSV, XLSX) or referencing a remote sheet URL instead of passing raw rows.
+Remote URL mode is disabled by default and must be explicitly enabled with `ENABLE_REMOTE_SHEET_URL=true` and a non-empty `SHEET_URL_ALLOWLIST`.
 
 Endpoint (multipart upload): `POST /email/bulk-template-sheet`
 
@@ -118,6 +122,7 @@ Dry-run response includes parsed `headers` and `rendered` previews.
 Example curl (file upload):
 ```bash
 curl -X POST http://localhost:5060/email/bulk-template-sheet \
+  -H 'x-service-token: change-me-email-service-token' \
   -H 'Content-Type: multipart/form-data' \
   -F 'sheet=@participants.xlsx' \
   -F 'template=Hello {{name}} your role {{role}}' \
