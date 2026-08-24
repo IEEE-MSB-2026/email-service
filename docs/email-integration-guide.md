@@ -25,7 +25,7 @@ Scope is based on the current codebase behavior in `src/controllers`, `src/route
 
 Minimal request:
 ```bash
-curl -X POST http://localhost:5060/email/send \
+curl -X POST http://localhost:3060/email/send \
   -H 'content-type: application/json' \
   -H 'x-service-token: change-me-email-service-token' \
   -d '{
@@ -70,7 +70,7 @@ Minimal request:
 
 Minimal request:
 ```bash
-curl -X POST http://localhost:5060/email/bulk-template-sheet \
+curl -X POST http://localhost:3060/email/bulk-template-sheet \
   -H 'x-service-token: change-me-email-service-token' \
   -F 'sheet=@participants.xlsx' \
   -F 'template=Hello {{name}}' \

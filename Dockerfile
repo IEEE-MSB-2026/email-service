@@ -11,5 +11,5 @@ COPY 404.jpg ./404.jpg
 
 USER node
 
-EXPOSE 5060
+EXPOSE 3060
 CMD ["node", "src/server.js"]

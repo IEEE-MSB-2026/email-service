@@ -22,7 +22,7 @@ cp .env.example .env
 npm install
 npm run dev
 ```
-Service runs on `PORT` (default 5060).
+Service runs on `PORT` (default 3060).
 
 ## Docker Deployment (Compose)
 
@@ -46,7 +46,7 @@ docker compose up -d --build
 ### 3) Verify health
 ```bash
 docker compose ps
-curl http://localhost:5060/health
+curl http://localhost:3060/health
 ```
 
 ### 4) View logs
@@ -78,7 +78,7 @@ docker compose down -v
 
 ## REST Send Example
 ```bash
-curl -X POST http://localhost:5060/email/send \
+curl -X POST http://localhost:3060/email/send \
   -H 'Content-Type: application/json' \
   -H 'x-service-token: change-me-email-service-token' \
   -d '{
@@ -173,7 +173,7 @@ Dry-run response includes parsed `headers` and `rendered` previews.
 
 Example curl (file upload):
 ```bash
-curl -X POST http://localhost:5060/email/bulk-template-sheet \
+curl -X POST http://localhost:3060/email/bulk-template-sheet \
   -H 'x-service-token: change-me-email-service-token' \
   -H 'Content-Type: multipart/form-data' \
   -F 'sheet=@participants.xlsx' \
