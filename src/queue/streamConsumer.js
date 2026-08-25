@@ -7,6 +7,7 @@ const { randomUUID } = require('crypto');
 
 const GROUP = 'email_service_group';
 const SUPPORTED_SCHEMA_VERSION = '1.0';
+const CONSUMER_NAME = process.env.HOSTNAME || process.env.CONSUMER_NAME || `consumer-${randomUUID().slice(0, 8)}`;
 
 let sendProvider;
 function getSendProvider() {
@@ -91,8 +92,12 @@ async function processPayloadEntry({
     if (!result.success) {
       payload.retries = (payload.retries || 0) + 1;
       if (payload.retries <= maxRetryAttempts) {
+        const backoffMs = Math.min(1000 * Math.pow(2, payload.retries - 1), 30000);
+        if (backoffMs > 0 && typeof deps.sleep === 'function') {
+          await deps.sleep(backoffMs);
+        }
         await client.xadd(stream, '*', 'payload', JSON.stringify({ ...payload, id: randomUUID() }));
-        loggerRef.warn({ retries: payload.retries }, 'Retry enqueued');
+        loggerRef.warn({ retries: payload.retries, backoffMs }, 'Retry enqueued');
       } else {
         loggerRef.error({ id: payload.id }, 'Max retries exceeded');
       }
@@ -122,11 +127,11 @@ async function startConsumer() {
   } catch (e) {
     if (!/BUSYGROUP/.test(e.message)) throw e;
   }
-  logger.info({ stream: streamName }, 'Email stream consumer started');
+  logger.info({ stream: streamName, consumer: CONSUMER_NAME }, 'Email stream consumer started');
 
   async function loop() {
     try {
-      const entries = await client.xreadgroup('GROUP', GROUP, 'consumer-1', 'BLOCK', 5000, 'COUNT', 10, 'STREAMS', streamName, '>');
+      const entries = await client.xreadgroup('GROUP', GROUP, CONSUMER_NAME, 'BLOCK', 5000, 'COUNT', 10, 'STREAMS', streamName, '>');
       if (entries) {
         for (const [, arr] of entries) {
           for (const entry of arr) {
@@ -150,6 +155,7 @@ async function startConsumer() {
 
 module.exports = {
   GROUP,
+  CONSUMER_NAME,
   SUPPORTED_SCHEMA_VERSION,
   parseEntry,
   processPayloadEntry,

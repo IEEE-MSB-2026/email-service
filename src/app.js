@@ -1,17 +1,15 @@
 const express = require('express');
 const emailRoutes = require('./routes/emailRoutes');
 const logger = require('./utils/logger');
-const fs = require('fs');
-const path = require("path");
 const config = require('./config');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 app.get('/health', (req, res) => res.json({
-    message: 'API is running',
-    timestamp: new Date(),
-  }));
+  message: 'API is running',
+  timestamp: new Date(),
+}));
 
 app.use('/email', emailRoutes);
 
@@ -26,21 +24,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 Handler
+// JSON 404 Handler
 app.use((req, res) => {
-  const imagePath = path.join(__dirname, '../', '404.jpg');
-
-  fs.readFile(imagePath, (err, data) => {
-    if (err) {
-      res.status(500).send('Error loading 404 image.');
-    } else {
-      res.writeHead(404, {
-        'Content-Type': 'image/jpeg',
-        'Content-Length': data.length
-      });
-      res.end(data);
-    }
-  });
+  res.status(404).json({ error: 'Not found' });
 });
 
 module.exports = app;
