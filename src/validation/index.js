@@ -38,7 +38,20 @@ function normalizeOptionalNulls(payload) {
   }
 }
 
+function normalizeRecipients(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return;
+  }
+  for (const field of ['to', 'cc', 'bcc']) {
+    if (typeof payload[field] === 'string') {
+      const trimmed = payload[field].trim();
+      payload[field] = trimmed ? [trimmed] : [];
+    }
+  }
+}
+
 function validateEmailPayload(payload) {
+  normalizeRecipients(payload);
   normalizeOptionalNulls(payload);
   const valid = validate(payload);
   if (!valid) {

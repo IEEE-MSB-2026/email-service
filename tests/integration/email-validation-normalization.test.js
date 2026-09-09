@@ -30,3 +30,18 @@ test('validation: still rejects invalid non-string optional field values', () =>
     /Invalid email payload: \/templateId must be string/i
   );
 });
+
+test('validation: string to/cc/bcc are normalized into arrays and accepted', () => {
+  const payload = {
+    to: 'user@example.com',
+    cc: 'manager@example.com',
+    bcc: 'archive@example.com',
+    subject: 'Welcome to IEEE',
+    text: 'Hello there',
+  };
+
+  assert.doesNotThrow(() => validateEmailPayload(payload));
+  assert.deepEqual(payload.to, ['user@example.com']);
+  assert.deepEqual(payload.cc, ['manager@example.com']);
+  assert.deepEqual(payload.bcc, ['archive@example.com']);
+});
